@@ -25,7 +25,7 @@ def create_message(game):
   r = get_teams_info(game['teams'])
   message_text = 'Score: \n' + str(game['score']['score_home']) + ' ' + r[0] + '\n' + str(game['score']['score_away']) + ' ' + r[1] + '\n4th Quarter time left: ' + game['score']['display_clock']
   message = MIMEText(message_text)
-  message['to'] = os.environ['receiver_email']
+  message['to'] = os.environ['receiver_email'].replace('\xc2\xa0', ' ')
   message['from'] = os.environ['sender_email']
   message['subject'] = "Omid's Close Game Alert"
   return message.as_string()
@@ -33,7 +33,7 @@ def create_message(game):
 
 def send_alerts(msg):
     sender_email = os.environ['sender_email']
-    receiver_email = os.environ['receiver_email'].split(',')
+    receiver_email = os.environ['receiver_email'].replace('\xc2\xa0', ' ').split(', ')
     
     port = 465
     smtp_server = "smtp.gmail.com"
@@ -52,7 +52,11 @@ def eval_single_game(game, already_ran=False):
     print('\n')
     is_fourth_q = (True if updated_game_score_obj['game_period'] == 4 else False)
     desired_mins_left = 6
-    actual_mins_left = int(updated_game_score_obj['display_clock'].split(':')[0])
+    clock_time = updated_game_score_obj['display_clock']
+    if '.' in clock_time:
+        actual_mins_left = int(clock_time.split('.')[0])
+    else:
+        actual_mins_left = int(clock_time.split(':')[0])
     print('actual mins left: ' + str(actual_mins_left))
     is_in_desired_mins_left = (True if actual_mins_left <= desired_mins_left else False)
     if is_fourth_q and is_in_desired_mins_left:
@@ -71,6 +75,7 @@ def eval_single_game(game, already_ran=False):
         else:
             mins_to_schedule_from_now = (((actual_mins_left+12) - desired_mins_left) * 2) + 5
         mins_to_schedule_from_now_datetime = datetime.now() + timedelta(minutes=mins_to_schedule_from_now)
+        print('scheduled a re-check')
         scheduler.add_job(eval_single_game, 'date',run_date=mins_to_schedule_from_now_datetime, args=[updated_game, True])
 
 
