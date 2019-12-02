@@ -54,7 +54,7 @@ def eval_single_game(game, already_ran=False):
     desired_mins_left = 6
     clock_time = updated_game_score_obj['display_clock']
     if '.' in clock_time:
-        actual_mins_left = int(clock_time.split('.')[0])
+        actual_mins_left = 0
     else:
         actual_mins_left = int(clock_time.split(':')[0])
     print('actual mins left: ' + str(actual_mins_left))
